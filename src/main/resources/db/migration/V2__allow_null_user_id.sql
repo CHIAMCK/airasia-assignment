@@ -1,0 +1,1 @@
+ALTER TABLE url_mapping ALTER COLUMN user_id DROP NOT NULL;

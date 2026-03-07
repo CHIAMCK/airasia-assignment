@@ -17,11 +17,22 @@ public class UrlMapping {
     @Column(name = "created_at", nullable = false)
     private Instant createdAt;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id")
+    private User user;
+
     protected UrlMapping() {}
 
     public UrlMapping(String shortCode, String originalUrl) {
         this.shortCode = shortCode;
         this.originalUrl = originalUrl;
+        this.createdAt = Instant.now();
+    }
+
+    public UrlMapping(String shortCode, String originalUrl, User user) {
+        this.shortCode = shortCode;
+        this.originalUrl = originalUrl;
+        this.user = user;
         this.createdAt = Instant.now();
     }
 
@@ -35,5 +46,9 @@ public class UrlMapping {
 
     public Instant getCreatedAt() {
         return createdAt;
+    }
+
+    public User getUser() {
+        return user;
     }
 }
