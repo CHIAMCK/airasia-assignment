@@ -13,10 +13,10 @@ import org.springframework.stereotype.Service;
 public class SnowflakeIdGenerator {
 
     /**
-     * Snowflake ID at 2024-01-01 00:00:00 UTC (node 0, seq 0).
+     * Snowflake ID at 2025-01-01 00:00:00 UTC (node 0, seq 0).
      * Format: timestamp << 22 | node << 12 | sequence
      */
-    private static final long EPOCH_START = 1704067200000L << 22;
+    private static final long EPOCH_START = 1735689600000L << 22;
 
     private final Snowflake snowflake;
 

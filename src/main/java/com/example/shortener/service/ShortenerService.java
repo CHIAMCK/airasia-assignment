@@ -16,7 +16,7 @@ import java.util.Optional;
 @Service
 public class ShortenerService {
 
-    private static final String SHORT_BASE_URL = "https://short.ly";
+    private static final String SHORT_BASE_URL = "http://localhost:8080";
     private static final int MAX_RETRIES = 3;
 
     private final UrlMappingRepository urlMappingRepository;
