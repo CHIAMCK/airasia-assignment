@@ -28,6 +28,10 @@ This starts:
 - **Redis** on port 6379
 - **Shortener API** on port 8080
 
+**API documentation** (OpenAPI/Swagger):
+- Swagger UI: http://localhost:8080/swagger-ui.html
+- OpenAPI JSON: http://localhost:8080/v3/api-docs
+
 Run in detached mode (background):
 
 ```bash
@@ -181,6 +185,19 @@ curl -L -w "\nRedirected to: %{url_effective}\n" http://localhost:8080/r/abc123
 ```bash
 curl -I http://localhost:8080/r/abc123
 ```
+
+---
+
+## API Documentation (OpenAPI)
+
+The API is documented with OpenAPI 3.0. When the application is running:
+
+| Resource | URL |
+|----------|-----|
+| **Swagger UI** (interactive) | http://localhost:8080/swagger-ui.html |
+| **OpenAPI JSON** | http://localhost:8080/v3/api-docs |
+
+Use Swagger UI to explore endpoints, view request/response schemas, and try out the API directly from the browser.
 
 ---
 
