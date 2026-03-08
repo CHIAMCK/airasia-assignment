@@ -2,6 +2,7 @@ package com.example.shortener.controller;
 
 import com.example.shortener.dto.ShortenRequest;
 import com.example.shortener.dto.ShortenResponse;
+import com.example.shortener.service.RateLimitService;
 import com.example.shortener.service.ShortenerService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
@@ -16,13 +17,18 @@ import java.net.URI;
 public class ShortenerController {
 
     private final ShortenerService shortenerService;
+    private final RateLimitService rateLimitService;
 
-    public ShortenerController(ShortenerService shortenerService) {
+    public ShortenerController(ShortenerService shortenerService, RateLimitService rateLimitService) {
         this.shortenerService = shortenerService;
+        this.rateLimitService = rateLimitService;
     }
 
     @PostMapping("/shorten")
     public ResponseEntity<ShortenResponse> shorten(@Valid @RequestBody ShortenRequest request, HttpServletRequest httpRequest) {
+        if (request.userId() == null) {
+            rateLimitService.consumeAnonymousShorten();
+        }
         String shortUrl = shortenerService.shorten(request.url(), request.userId());
         return ResponseEntity.status(HttpStatus.CREATED).body(new ShortenResponse(shortUrl));
     }

@@ -4,6 +4,7 @@ import com.example.shortener.entity.User;
 import com.example.shortener.entity.UrlMapping;
 import com.example.shortener.repository.UrlMappingRepository;
 import com.example.shortener.repository.UserRepository;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Service;
@@ -99,6 +100,7 @@ public class ShortenerService {
         throw new IllegalStateException("Failed to generate unique short code after " + MAX_RETRIES + " attempts");
     }
 
+    @Cacheable(value = "urlMappings", key = "#shortCode")
     public Optional<String> resolve(@NonNull String shortCode) {
         if (shortCode.isEmpty()) {
             return Optional.empty();
