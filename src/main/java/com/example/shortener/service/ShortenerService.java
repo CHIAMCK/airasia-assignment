@@ -4,6 +4,8 @@ import com.example.shortener.entity.User;
 import com.example.shortener.entity.UrlMapping;
 import com.example.shortener.repository.UrlMappingRepository;
 import com.example.shortener.repository.UserRepository;
+import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -13,18 +15,19 @@ import java.util.Optional;
 
 @Service
 public class ShortenerService {
-    
+
     private static final String SHORT_BASE_URL = "https://short.ly";
-    
+    private static final int MAX_RETRIES = 3;
+
     private final UrlMappingRepository urlMappingRepository;
     private final UserRepository userRepository;
-    private final PreGeneratedKeyService preGeneratedKeyService;
+    private final SnowflakeIdGenerator snowflakeIdGenerator;
 
     public ShortenerService(UrlMappingRepository urlMappingRepository, UserRepository userRepository,
-                           PreGeneratedKeyService preGeneratedKeyService) {
+                           SnowflakeIdGenerator snowflakeIdGenerator) {
         this.urlMappingRepository = urlMappingRepository;
         this.userRepository = userRepository;
-        this.preGeneratedKeyService = preGeneratedKeyService;
+        this.snowflakeIdGenerator = snowflakeIdGenerator;
     }
 
     /**
@@ -71,7 +74,7 @@ public class ShortenerService {
     }
 
     @Transactional
-    public String shorten(String longUrl, String requestBaseUrl, Long userId) {
+    public String shorten(String longUrl, Long userId) {
         String originalUrl = normalizeLongUrl(longUrl);
         User user = null;
         if (userId != null) {
@@ -79,50 +82,29 @@ public class ShortenerService {
                     .orElseThrow(() -> new IllegalArgumentException("User not found: " + userId));
         }
 
-        String code = null;
-        Optional<String> preGeneratedKey = preGeneratedKeyService.getNextKey();
-        if (preGeneratedKey.isPresent()) {
-            code = preGeneratedKey.get();
-        }
-        
-        if (code == null || code.isEmpty()) {
-            code = generateKeyOnDemand();
+        for (int attempt = 0; attempt < MAX_RETRIES; attempt++) {
+            String code = snowflakeIdGenerator.generateShortCode();
+            UrlMapping mapping = new UrlMapping(code, originalUrl, user);
+            try {
+                urlMappingRepository.save(mapping);
+                return SHORT_BASE_URL + "/r/" + code;
+            } catch (DataIntegrityViolationException e) {
+                // DB unique constraint safety guard: rare duplicate (clock skew, etc.), retry with new ID
+                if (attempt == MAX_RETRIES - 1) {
+                    throw e;
+                }
+            }
         }
 
-        UrlMapping mapping = new UrlMapping(code, originalUrl, user);
-        urlMappingRepository.save(mapping);
-        
-        preGeneratedKeyService.markKeyAsUsed(code);
-        return SHORT_BASE_URL + "/r/" + code;
+        throw new IllegalStateException("Failed to generate unique short code after " + MAX_RETRIES + " attempts");
     }
 
-    public Optional<String> resolve(String shortCode) {
+    public Optional<String> resolve(@NonNull String shortCode) {
+        if (shortCode.isEmpty()) {
+            return Optional.empty();
+        }
+
         return urlMappingRepository.findById(shortCode)
                 .map(UrlMapping::getOriginalUrl);
-    }
-
-    /**
-     * Generates a key on-demand when the pre-generated pool is empty.
-     */
-    private String generateKeyOnDemand() {
-        String code;
-        int maxRetries = 3;
-        int retryCount = 0;
-        
-        do {
-            code = preGeneratedKeyService.generateRandomKey();
-            retryCount++;
-            
-            if (code != null && !code.isEmpty() && urlMappingRepository.existsById(code)) {
-                code = null;
-            }
-
-        } while (code == null && retryCount < maxRetries);
-        
-        if (code == null) {
-            throw new IllegalStateException("Failed to generate unique key after " + maxRetries + " attempts");
-        }
-        
-        return code;
     }
 }
