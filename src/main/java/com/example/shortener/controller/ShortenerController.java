@@ -1,6 +1,5 @@
 package com.example.shortener.controller;
 
-import com.example.shortener.dto.ResolveResponse;
 import com.example.shortener.dto.ShortenRequest;
 import com.example.shortener.dto.ShortenResponse;
 import com.example.shortener.service.RateLimitService;
@@ -74,19 +73,6 @@ public class ShortenerController {
         }
 
         return ResponseEntity.notFound().build();
-    }
-
-    @Operation(summary = "Resolve short code (JSON)", description = "Returns the original URL as JSON. Use this in Swagger UI \"Try it out\". For browser redirects, use /r/{shortCode} instead.")
-    @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "Short code found"),
-            @ApiResponse(responseCode = "404", description = "Short code not found")
-    })
-    @GetMapping("/api/resolve/{shortCode}")
-    public ResponseEntity<ResolveResponse> resolve(
-            @Parameter(description = "The short code from the shortened URL") @PathVariable @NonNull String shortCode) {
-        return shortenerService.resolve(shortCode)
-                .map(url -> ResponseEntity.ok(new ResolveResponse(url)))
-                .orElse(ResponseEntity.status(HttpStatus.NOT_FOUND).body(null));
     }
 
     @ExceptionHandler(IllegalArgumentException.class)
