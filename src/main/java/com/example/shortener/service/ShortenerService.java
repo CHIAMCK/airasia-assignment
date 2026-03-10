@@ -9,7 +9,6 @@ import org.springframework.cache.annotation.Cacheable;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -78,7 +77,6 @@ public class ShortenerService {
         }
     }
 
-    @Transactional
     public String shorten(String longUrl, Long userId) {
         String originalUrl = normalizeLongUrl(longUrl);
         User user = null;

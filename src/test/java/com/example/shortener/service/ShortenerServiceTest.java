@@ -12,6 +12,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import java.util.Optional;
 
@@ -38,6 +39,9 @@ class ShortenerServiceTest {
     @BeforeEach
     void setUp() {
         shortenerService = new ShortenerService(urlMappingRepository, userRepository, snowflakeIdGenerator);
+        // Set maxRetries and shortBaseUrl since @Value annotation is not processed in unit tests
+        ReflectionTestUtils.setField(shortenerService, "maxRetries", 3);
+        ReflectionTestUtils.setField(shortenerService, "shortBaseUrl", "http://localhost:8080");
     }
 
     @Nested
