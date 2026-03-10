@@ -216,6 +216,8 @@ Configuration is via `application.properties` and environment variables. No API 
 | `SPRING_DATA_REDIS_PORT` | Redis port | `6379` |
 | `SNOWFLAKE_MACHINE_ID` | Machine ID for Snowflake ID generator (0–1023) | `0` |
 | `CACHE_URL_MAPPINGS_TTL` | Cache TTL for URL mappings (seconds) | `86400` (24h) |
+| `SHORTENER_BASE_URL` | Base URL for short links (e.g. `https://short.example.com`) | `http://localhost:8080` |
+| `SHORTENER_MAX_RETRIES` | Max retries when generating unique short codes | `3` |
 
 ### Rate limiting
 
@@ -226,4 +228,4 @@ Anonymous shorten requests (no `userId`) are rate-limited. Override in `applicat
 
 ### Short URL base
 
-Short URLs are returned as `http://localhost:8080/r/{shortCode}`. This base URL is hardcoded in `ShortenerService`; change it there for production deployments.
+Short URLs are returned as `{base-url}/r/{shortCode}`. Configure the base URL via `shortener.base-url` in `application.properties` or the `SHORTENER_BASE_URL` environment variable (e.g. `https://short.example.com` for production).

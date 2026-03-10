@@ -4,6 +4,7 @@ import com.example.shortener.entity.User;
 import com.example.shortener.entity.UrlMapping;
 import com.example.shortener.repository.UrlMappingRepository;
 import com.example.shortener.repository.UserRepository;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.lang.NonNull;
@@ -17,8 +18,11 @@ import java.util.Optional;
 @Service
 public class ShortenerService {
 
-    private static final String SHORT_BASE_URL = "http://localhost:8080";
-    private static final int MAX_RETRIES = 3;
+    @Value("${shortener.base-url:http://localhost:8080}")
+    private String shortBaseUrl;
+
+    @Value("${shortener.max-retries:3}")
+    private int maxRetries;
 
     private final UrlMappingRepository urlMappingRepository;
     private final UserRepository userRepository;
@@ -83,21 +87,21 @@ public class ShortenerService {
                     .orElseThrow(() -> new IllegalArgumentException("User not found: " + userId));
         }
 
-        for (int attempt = 0; attempt < MAX_RETRIES; attempt++) {
+        for (int attempt = 0; attempt < maxRetries; attempt++) {
             String code = snowflakeIdGenerator.generateShortCode();
             UrlMapping mapping = new UrlMapping(code, originalUrl, user);
             try {
                 urlMappingRepository.save(mapping);
-                return SHORT_BASE_URL + "/r/" + code;
+                return shortBaseUrl + "/r/" + code;
             } catch (DataIntegrityViolationException e) {
                 // DB unique constraint safety guard: rare duplicate (clock skew, etc.), retry with new ID
-                if (attempt == MAX_RETRIES - 1) {
+                if (attempt == maxRetries - 1) {
                     throw e;
                 }
             }
         }
 
-        throw new IllegalStateException("Failed to generate unique short code after " + MAX_RETRIES + " attempts");
+        throw new IllegalStateException("Failed to generate unique short code after " + maxRetries + " attempts");
     }
 
     @Cacheable(value = "urlMappings", key = "#shortCode")
